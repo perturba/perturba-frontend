@@ -8,9 +8,9 @@ export default function Footer() {
 
     return (
         <footer
-            className={`fixed bottom-0 left-0 w-full z-50 flex items-center items-center justify-between px-8 py-4 transition-colors duration-300 ${isLanding
-                ? "text-slate-100"
-                : "border-t-2 border-indigo-100 text-slate-800"
+            className={`h-18 flex items-center items-center justify-between px-8 py-4 transition-colors duration-300 ${isLanding
+                ? "text-slate-100 fixed bottom-0 left-0 w-full z-50"
+                : "border-t-2 border-indigo-100 text-slate-800 bg-gray-50"
                 }`}
         >
             <p
