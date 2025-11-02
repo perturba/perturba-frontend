@@ -37,6 +37,8 @@ const TransformLogFlexTable: React.FC = () => {
         router.push(`/dashboard/image-detail/${id}`);
     };
 
+    // TODO: 이미지 list 불러오기 api
+
     return (
         <div className="w-full max-w-2xl lg:max-w-3xl rounded-xl shadow-md outline outline-1 outline-blue-100 flex flex-col items-start mx-auto my-8 bg-white">
             <div className="w-full px-6 py-4 bg-gray-50 rounded-t-xl outline outline-1 outline-blue-100 flex items-center">
