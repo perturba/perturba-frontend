@@ -22,10 +22,10 @@ export default function InvisibleCloaking() {
 
     return (
         <section className="h-screen w-screen snap-start flex flex-col items-center justify-center px-6 md:px-12 py-48 relative overflow-hidden">
-            <h2 className="text-4xl md:text-5xl font-black mb-10 z-10 text-slate-100 animate-fade-in-up">
+            <h2 className="text-2xl md:text-3xl font-black mb-10 z-10 text-slate-100 animate-fade-in-up">
                 비가시성 클로킹이란 무엇인가요?
             </h2>
-            <p className="text-gray-200 text-center max-w-3xl leading-relaxed mb-16 text-lg z-10 animate-fade-in-up">
+            <p className="text-gray-200 text-center max-w-3xl leading-relaxed mb-16 text-base z-10 animate-fade-in-up">
                 비가시성 클로킹은 사진에 <strong className="font-bold text-white">눈에 보이지 않는 보호 신호</strong>를 더해
                 <br />
                 AI가 이미지를 정확히 인식하거나 오용하지 못하도록 막아주는 기술입니다.
@@ -38,11 +38,11 @@ export default function InvisibleCloaking() {
                 {features.map((item, i) => (
                     <div
                         key={item.title}
-                        className={`relative bg-white/10 border border-white/10 backdrop-blur-xl p-10 rounded-3xl flex flex-col items-center gap-6 drop-shadow-xl transition-transform duration-300 will-change-transform hover:scale-105 hover:ring-2 hover:ring-indigo-300 animate-fade-in-up`}
+                        className="relative bg-white/10 border border-white/10 backdrop-blur-xl p-8 rounded-3xl flex flex-col items-center gap-6 drop-shadow-xl transition-transform duration-300 will-change-transform hover:scale-105 hover:ring-2 hover:ring-indigo-300 animate-fade-in-up"
                         style={{ animationDelay: `${i * 0.13 + 0.12}s` }}
                     >
                         <div>{item.icon}</div>
-                        <h3 className="font-semibold text-lg text-slate-100 mt-3">{item.title}</h3>
+                        <h3 className="font-semibold text-base text-slate-100 mt-3">{item.title}</h3>
                         <p className="text-gray-300 text-base text-center leading-snug">{item.text}</p>
                     </div>
                 ))}
