@@ -12,7 +12,7 @@ export default function ImageUploadPage() {
         const file = e.target.files?.[0];
         if (!file) return;
         setSelectedFile(file);
-        
+
         // TODO: 이미지 업로드 api
 
         const fileUrl = URL.createObjectURL(file);
@@ -20,7 +20,7 @@ export default function ImageUploadPage() {
     };
 
     return (
-        <div className="w-full min-h-screen bg-gray-50 flex flex-col py-10 px-8 gap-16">
+        <div className="flex-1 min-h-0 flex flex-col bg-gray-50 py-10 px-8 gap-16">
             <div className="flex flex-row justify-between">
                 <span className="text-gray-900 text-2xl font-bold">파일 업로드 하기</span>
                 <TransformStatusButton />

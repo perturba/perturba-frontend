@@ -24,7 +24,7 @@ export default function ImageDetailPage() {
     // TODO: 파일 저장하기 & 파일 공유하기
 
     return (
-        <div className="w-full min-h-screen bg-gray-50 flex flex-col py-10 px-8 gap-12 overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col bg-gray-50 py-10 px-8 gap-8 overflow-hidden">
             <div className="flex flex-row justify-between items-center">
                 <span className="text-gray-900 text-2xl font-bold">example.jpeg</span>
                 <button
@@ -52,11 +52,11 @@ export default function ImageDetailPage() {
                             </button>
                         ))}
                     </div>
-                    <div className="relative flex justify-center items-center w-full min-h-[280px] bg-gray-100 rounded-xl overflow-hidden group transition">
+                    <div className="relative flex justify-center items-center w-full min-h-[260px] bg-gray-100 rounded-xl overflow-hidden group transition">
                         <img
                             src={images[tabIdx]}
                             alt={tabList[tabIdx].name}
-                            className="object-contain rounded-lg max-h-[260px] w-auto transition-transform duration-300 group-hover:scale-105"
+                            className="object-contain rounded-lg max-h-[240px] w-auto transition-transform duration-300 group-hover:scale-105"
                         />
                     </div>
                 </div>

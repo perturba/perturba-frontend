@@ -25,7 +25,7 @@ const rows: LogRow[] = Array(30)
         id: String(i + 1)
     }));
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 8;
 
 const TransformLogFlexTable: React.FC = () => {
     const [page, setPage] = useState<number>(1);
