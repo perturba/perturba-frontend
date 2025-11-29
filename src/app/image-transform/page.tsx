@@ -7,7 +7,7 @@ import RecommendationModal from "@/components/RecommendationModal";
 import { useImageUploadStore } from "@/store/imageUploadStore";
 import { useJobStatusStore, subscribeToJob } from "@/store/jobStatusStore";
 import type { Intensity } from "@/types/api";
-import { createJob } from "@/api/jogApi";
+import { createJob } from "@/api/jobApi";
 
 const strengthOptions = ["높음", "중간", "낮음"] as const;
 type Strength = typeof strengthOptions[number];
@@ -31,7 +31,6 @@ export default function ImageTransformPage() {
 
     const hasCheckedInitialImage = useRef(false);
 
-    // 최초 진입 시에만 uploadedImage 없으면 업로드 페이지로 보냄
     useEffect(() => {
         if (hasCheckedInitialImage.current) return;
         hasCheckedInitialImage.current = true;
@@ -47,12 +46,7 @@ export default function ImageTransformPage() {
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
-        // 이 페이지에서 새로 선택한 파일만 로컬 상태로 관리
         setSelectedFile(file);
-
-        // 필요하다면 여기서 store에도 반영하는 전용 액션을 만들 수 있음
-        // 예: useImageUploadStore.getState().setUploadedImageFromFile(file)
     };
 
     const handleTransformImage = async () => {
@@ -113,7 +107,6 @@ export default function ImageTransformPage() {
     };
 
     const handleGoBack = () => {
-        // 뒤로가기: 업로드 상태 비우고 이전 페이지로
         clearUploadedImage();
         router.push("/dashboard/image-upload");
     };
@@ -123,9 +116,6 @@ export default function ImageTransformPage() {
     };
 
     const handleRemoveImage = () => {
-        // 이 페이지 안에서만 삭제: preview 카드 제거 + 업로드 UI 재노출
-        // uploadedImage는 그대로 두고, selectedFile만 null로 둬도 되지만
-        // preview를 더 이상 쓰지 않으려면 store에서 preview 제거용 액션을 따로 두는 것도 좋음
         setSelectedFile(null);
     };
 
