@@ -2,22 +2,52 @@
 
 import { useState } from "react";
 import { BiX, BiSend } from "react-icons/bi";
+import type { FeedbackRequest, StrengthEval, DistortionEval } from "@/types/api";
 
 interface FeedbackModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onSubmit: (feedback: FeedbackRequest) => void | Promise<void>;
+    isSubmitting?: boolean;
 }
 
 const strengthOptions = ["매우 약함", "약함", "보통", "강함", "매우 강함"];
 const distortionOptions = ["매우 낮음", "낮음", "보통", "높음", "매우 높음"];
 
-export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
+const strengthMapping: Record<number, StrengthEval> = {
+    0: "VERY_WEAK",
+    1: "WEAK",
+    2: "MODERATE",
+    3: "STRONG",
+    4: "VERY_STRONG",
+};
+
+const distortionMapping: Record<number, DistortionEval> = {
+    0: "VERY_LOW",
+    1: "LOW",
+    2: "MODERATE",
+    3: "HIGH",
+    4: "VERY_HIGH",
+};
+
+export default function FeedbackModal({
+    isOpen,
+    onClose,
+    onSubmit,
+    isSubmitting = false
+}: FeedbackModalProps) {
     const [strengthRating, setStrengthRating] = useState<number | null>(null);
     const [distortionRating, setDistortionRating] = useState<number | null>(null);
 
-    const handleSubmit = () => {
-        console.log("Feedback submitted:", { strengthRating, distortionRating });
-        onClose();
+    const handleSubmit = async () => {
+        if (strengthRating === null || distortionRating === null) return;
+
+        const feedback: FeedbackRequest = {
+            strengthEval: strengthMapping[strengthRating],
+            distortionEval: distortionMapping[distortionRating],
+        };
+
+        await onSubmit(feedback);
     };
 
     if (!isOpen) return null;
@@ -39,6 +69,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
                         <button
                             onClick={onClose}
                             className="p-2 rounded-lg hover:bg-gray-100 transition"
+                            disabled={isSubmitting}
                         >
                             <BiX size={24} className="text-gray-900" />
                         </button>
@@ -53,9 +84,10 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
                                 <button
                                     key={option}
                                     onClick={() => setStrengthRating(idx)}
+                                    disabled={isSubmitting}
                                     className={`py-3 px-2 rounded-lg border text-sm font-normal transition ${strengthRating === idx
                                             ? "bg-sky-700 border-sky-700 text-white"
-                                            : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"
+                                            : "bg-white border-gray-300 text-gray-700 hover:border-gray-400 disabled:opacity-50"
                                         }`}
                                 >
                                     {option}
@@ -77,9 +109,10 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
                                 <button
                                     key={option}
                                     onClick={() => setDistortionRating(idx)}
+                                    disabled={isSubmitting}
                                     className={`py-3 px-2 rounded-lg border text-sm font-normal transition ${distortionRating === idx
                                             ? "bg-sky-700 border-sky-700 text-white"
-                                            : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"
+                                            : "bg-white border-gray-300 text-gray-700 hover:border-gray-400 disabled:opacity-50"
                                         }`}
                                 >
                                     {option}
@@ -95,11 +128,20 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
                     <div className="pt-6 border-t border-gray-200 flex justify-end">
                         <button
                             onClick={handleSubmit}
-                            disabled={strengthRating === null || distortionRating === null}
+                            disabled={strengthRating === null || distortionRating === null || isSubmitting}
                             className="flex items-center gap-2 px-6 py-3 bg-sky-700 text-white rounded-lg font-medium hover:bg-sky-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
                         >
-                            제출하기
-                            <BiSend size={16} />
+                            {isSubmitting ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    제출 중...
+                                </>
+                            ) : (
+                                <>
+                                    제출하기
+                                    <BiSend size={16} />
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
