@@ -50,8 +50,3 @@ export const submitJobFeedback = async (
     );
     return data;
 };
-
-export const subscribeJobEvents = (publicId: string) => {
-    const url = `${process.env.NEXT_PUBLIC_SERVER_API_URL}/v1/jobs/${publicId}/events`;
-    return new EventSource(url, { withCredentials: true });
-};

@@ -7,7 +7,6 @@ import type {
 } from "@/types/api";
 import axiosInstance from "./axios";
 
-
 export const getUploadUrl = async (request: UploadUrlRequest) => {
     const { data } = await axiosInstance.post<ApiResponse<UploadUrlResponse>>(
         "/v1/assets/upload-url",
