@@ -3,21 +3,45 @@
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { BiMenu, BiUpload, BiX, BiImageAlt, BiBookAlt, BiPulse } from "react-icons/bi";
-import MenuItem from "./MenuItem";
+import {
+    BiMenu,
+    BiUpload,
+    BiImageAlt,
+    BiBookAlt,
+    BiPulse,
+} from "react-icons/bi";
 import Sidebar from "./Sidebar";
+import { logout as apiLogout } from "@/api/authApi";
+import { getGuestSession } from "@/api/guestControllerApi";
+import { useAuthStore } from "@/store/authStore";
 
-type SidebarMenuItem = {
+export type SidebarMenuItem = {
     label: string;
     href: string;
     icon: React.ReactElement;
 };
 
-export const sidebarMenu: SidebarMenuItem[] = [
-    { label: "파일 업로드 하기", href: "/dashboard/image-upload", icon: <BiUpload size={22} /> },
-    { label: "이미지 목록", href: "/dashboard/list", icon: <BiImageAlt size={22} /> },
-    { label: "API Docs", href: "/dashboard/api-docs", icon: <BiBookAlt size={22} /> },
-    { label: "서비스 성능 보기", href: "/dashboard/performance", icon: <BiPulse size={22} /> },
+const sidebarMenu: SidebarMenuItem[] = [
+    {
+        label: "파일 업로드 하기",
+        href: "/dashboard/image-upload",
+        icon: <BiUpload size={22} />,
+    },
+    {
+        label: "이미지 목록",
+        href: "/dashboard/list",
+        icon: <BiImageAlt size={22} />,
+    },
+    {
+        label: "API Docs",
+        href: "/dashboard/api-docs",
+        icon: <BiBookAlt size={22} />,
+    },
+    {
+        label: "서비스 성능 보기",
+        href: "/dashboard/performance",
+        icon: <BiPulse size={22} />,
+    },
 ];
 
 export default function Header() {
@@ -27,16 +51,50 @@ export default function Header() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [curMenu, setCurMenu] = useState<string>(sidebarMenu[0].label);
 
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const loginType = useAuthStore((state) => state.loginType);
+    const setLoginType = useAuthStore((state) => state.setLoginType);
+    const setGuestExpiresAt = useAuthStore((state) => state.setGuestExpiresAt);
+    const logout = useAuthStore((state) => state.logout);
+
+    const isGuest = !isAuthenticated && loginType === "GUEST";
+
     const handleMove = (href: string, label: string) => {
         router.push(href);
         setCurMenu(label);
         setMenuOpen(false);
     };
 
-    const handleLogin = () => handleMove("/dashboard", sidebarMenu[0].label);
-    const handleLogout = () => handleMove("/", sidebarMenu[0].label);
+    const REDIRECT_URL = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI;
+
+    const handleLogin = () => {
+        window.location.href = `${process.env.NEXT_PUBLIC_SERVER_API_URL}/oauth2/authorization/google?redirect_uri=${REDIRECT_URL}`;
+    };
+
+    const handleGuestLogin = async () => {
+        try {
+            const res = await getGuestSession();
+            setLoginType("GUEST");
+            setGuestExpiresAt(res.data.expiresAt);
+            handleMove("/dashboard", sidebarMenu[0].label);
+        } catch (error) {
+            console.error("Guest login failed:", error);
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await apiLogout();
+            logout();
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
+    };
 
     const toggleMenu = () => setMenuOpen((prev) => !prev);
+
+    const guestSidebarMenu: SidebarMenuItem[] = [sidebarMenu[0]];
+    const effectiveMenu = isGuest ? guestSidebarMenu : sidebarMenu;
 
     return (
         <>
@@ -46,7 +104,10 @@ export default function Header() {
                     : "border-b-2 border-indigo-100 text-slate-800 bg-gray-50"
                     }`}
             >
-                <div className={`flex items-center gap-4 ${isLanding ? "" : "flex-1"}`}>
+                <div
+                    className={`flex items-center gap-4 ${isLanding ? "" : "flex-1"
+                        }`}
+                >
                     <Image
                         src={isLanding ? "/perturba_white.png" : "/perturba_black.png"}
                         alt="Logo"
@@ -66,19 +127,44 @@ export default function Header() {
                 </div>
                 <div className="flex items-center gap-2">
                     {isLanding ? (
-                        <button
-                            className="px-3 py-1.5 rounded-xl border border-gray-50 text-gray-300 text-sm font-medium"
-                            onClick={handleLogin}
-                        >
-                            로그인
-                        </button>
+                        <>
+                            {!isAuthenticated && !isGuest ? (
+                                <>
+                                    <button
+                                        className="px-3 py-1.5 rounded-xl border border-gray-50 text-gray-300 text-sm font-medium hover:bg-white/10 transition"
+                                        onClick={handleGuestLogin}
+                                    >
+                                        게스트 로그인
+                                    </button>
+                                    <button
+                                        className="px-3 py-1.5 rounded-xl border border-gray-50 text-gray-300 text-sm font-medium hover:bg-white/10 transition"
+                                        onClick={handleLogin}
+                                    >
+                                        로그인
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    className="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
+                                    onClick={() =>
+                                        handleMove("/dashboard", sidebarMenu[0].label)
+                                    }
+                                >
+                                    대시보드로 이동
+                                </button>
+                            )}
+                        </>
                     ) : (
-                        <button
-                            className="px-3 py-1.5 text-slate-800 text-sm font-medium"
-                            onClick={handleLogout}
-                        >
-                            로그아웃
-                        </button>
+                        <>
+                            {isGuest ? null : (
+                                <button
+                                    className="px-3 py-1.5 text-slate-800 text-sm font-medium hover:text-slate-600 transition"
+                                    onClick={handleLogout}
+                                >
+                                    로그아웃
+                                </button>
+                            )}
+                        </>
                     )}
                 </div>
             </header>
@@ -87,6 +173,7 @@ export default function Header() {
                     toggleMenu={toggleMenu}
                     curMenu={curMenu}
                     handleMove={handleMove}
+                    menuItems={effectiveMenu}
                 />
             )}
         </>

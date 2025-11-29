@@ -3,15 +3,16 @@
 import { BiX } from "react-icons/bi";
 import MenuItem from "./MenuItem";
 import { usePathname } from "next/navigation";
-import { sidebarMenu } from "./Header";
+import { SidebarMenuItem } from "./Header";
 
 type SidebarProps = {
     toggleMenu: () => void;
     curMenu: string;
     handleMove: (href: string, label: string) => void;
+    menuItems: SidebarMenuItem[];
 }
 
-export default function Sidebar({toggleMenu, curMenu, handleMove}: SidebarProps) {
+export default function Sidebar({ toggleMenu, curMenu, handleMove, menuItems }: SidebarProps) {
     const pathname = usePathname();
 
     return (
@@ -32,7 +33,7 @@ export default function Sidebar({toggleMenu, curMenu, handleMove}: SidebarProps)
                     </button>
                 </div>
                 <nav className="flex flex-col gap-2 p-4">
-                    {sidebarMenu.map((item) => (
+                    {menuItems.map((item) => (
                         <MenuItem
                             key={item.href}
                             label={item.label}
