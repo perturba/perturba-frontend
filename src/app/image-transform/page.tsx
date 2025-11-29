@@ -1,37 +1,135 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { BiChevronDown, BiChevronLeft, BiImage } from "react-icons/bi";
+import { useState, useEffect, useRef } from "react";
+import { BiChevronDown, BiChevronLeft, BiImage, BiX } from "react-icons/bi";
 import RecommendationModal from "@/components/RecommendationModal";
+import { useImageUploadStore } from "@/store/imageUploadStore";
+import { useJobStatusStore, subscribeToJob } from "@/store/jobStatusStore";
+import type { Intensity } from "@/types/api";
+import { createJob } from "@/api/jogApi";
 
 const strengthOptions = ["높음", "중간", "낮음"] as const;
 type Strength = typeof strengthOptions[number];
 
-export default function ResponsiveImageTransformPage() {
+const strengthToIntensity: Record<Strength, Intensity> = {
+    "높음": "HIGH",
+    "중간": "MEDIUM",
+    "낮음": "LOW",
+};
+
+export default function ImageTransformPage() {
+    const router = useRouter();
     const [selected, setSelected] = useState<Strength>("중간");
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [showRecommendation, setShowRecommendation] = useState(false);
-    const router = useRouter();
+    const [creating, setCreating] = useState(false);
+
+    const { uploadedImage, clearUploadedImage } = useImageUploadStore();
+    const addJob = useJobStatusStore((state) => state.addJob);
+
+    const hasCheckedInitialImage = useRef(false);
+
+    // 최초 진입 시에만 uploadedImage 없으면 업로드 페이지로 보냄
+    useEffect(() => {
+        if (hasCheckedInitialImage.current) return;
+        hasCheckedInitialImage.current = true;
+
+        if (!uploadedImage) {
+            router.replace("/dashboard/image-upload");
+            return;
+        }
+
+        setSelectedFile(uploadedImage.file);
+    }, [uploadedImage, router]);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+
+        // 이 페이지에서 새로 선택한 파일만 로컬 상태로 관리
         setSelectedFile(file);
+
+        // 필요하다면 여기서 store에도 반영하는 전용 액션을 만들 수 있음
+        // 예: useImageUploadStore.getState().setUploadedImageFromFile(file)
     };
 
-    const handleTransformImage = () => {
-        router.push("/dashboard/list");
+    const handleTransformImage = async () => {
+        if (!uploadedImage || creating) return;
+
+        try {
+            setCreating(true);
+
+            const intensity = strengthToIntensity[selected];
+            const response = await createJob({
+                inputAssetId: uploadedImage.assetId,
+                intensity,
+                notifyVia: "NONE",
+                clientChannel: "WEB",
+                requestMode: "ASYNC",
+            });
+            console.log(response);
+
+            if (response.ok && response.data) {
+                const { publicId } = response.data;
+
+                addJob({
+                    publicId,
+                    fileName: uploadedImage.file.name,
+                    status: "PROGRESS",
+                    createdAt: new Date().toISOString(),
+                });
+
+                subscribeToJob(publicId, uploadedImage.file.name);
+
+                window.dispatchEvent(
+                    new CustomEvent("job-toast", {
+                        detail: {
+                            type: "success",
+                            message: `${uploadedImage.file.name} 변환이 시작되었습니다.`,
+                        },
+                    })
+                );
+
+                clearUploadedImage();
+                router.push("/dashboard/list");
+            } else {
+                throw new Error("작업 생성 실패");
+            }
+        } catch (error) {
+            console.error("Job creation failed:", error);
+            window.dispatchEvent(
+                new CustomEvent("job-toast", {
+                    detail: {
+                        type: "error",
+                        message: "작업 생성에 실패했습니다. 다시 시도해주세요.",
+                    },
+                })
+            );
+        } finally {
+            setCreating(false);
+        }
     };
 
     const handleGoBack = () => {
+        // 뒤로가기: 업로드 상태 비우고 이전 페이지로
+        clearUploadedImage();
         router.push("/dashboard/image-upload");
     };
 
     const handleSelectRecommendation = (strength: string) => {
         setSelected(strength as Strength);
     };
+
+    const handleRemoveImage = () => {
+        // 이 페이지 안에서만 삭제: preview 카드 제거 + 업로드 UI 재노출
+        // uploadedImage는 그대로 두고, selectedFile만 null로 둬도 되지만
+        // preview를 더 이상 쓰지 않으려면 store에서 preview 제거용 액션을 따로 두는 것도 좋음
+        setSelectedFile(null);
+    };
+
+    const hasImage = selectedFile && uploadedImage;
 
     return (
         <>
@@ -56,23 +154,52 @@ export default function ResponsiveImageTransformPage() {
                     </div>
 
                     <div className="flex-1 flex items-center justify-center px-4 sm:px-5 md:px-8 bg-gray-50">
-                        <label className="w-full max-w-[280px] sm:max-w-[320px] md:max-w-xl bg-white md:bg-slate-100 border-2 md:border-4 border-dashed border-blue-500 rounded-3xl py-12 sm:py-16 md:py-20 flex flex-col items-center justify-center gap-2 sm:gap-3 md:gap-4 cursor-pointer md:shadow-lg">
-                            <input
-                                type="file"
-                                accept="image/jpeg"
-                                className="hidden"
-                                onChange={handleFileUpload}
-                            />
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 flex items-center justify-center mb-1 md:mb-2">
-                                <BiImage size={40} className="text-blue-500 sm:w-12 sm:h-12" />
+                        {hasImage ? (
+                            <div className="w-full max-w-[280px] sm:max-w-[320px] md:max-w-xl bg-white rounded-3xl shadow-lg overflow-hidden border-2 border-blue-200">
+                                <div className="relative aspect-square bg-gray-100">
+                                    <img
+                                        src={uploadedImage!.preview}
+                                        alt="Preview"
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <button
+                                        onClick={handleRemoveImage}
+                                        className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition"
+                                    >
+                                        <BiX size={20} className="text-gray-700" />
+                                    </button>
+                                </div>
+                                <div className="p-4 bg-white">
+                                    <p className="text-sm text-gray-700 font-medium mb-2">
+                                        현재 업로드된 이미지:
+                                    </p>
+                                    <p className="text-sm text-gray-900 font-semibold truncate">
+                                        {selectedFile!.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {(selectedFile!.size / 1024 / 1024).toFixed(2)} MB
+                                    </p>
+                                </div>
                             </div>
-                            <span className="text-[11px] sm:text-xs md:text-base font-medium md:font-semibold text-gray-900 text-center px-4 sm:px-6 md:px-8 leading-tight sm:leading-normal">
-                                파일을 업로드하려면 클릭하거나 끌어다 놓으세요
-                            </span>
-                            <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-600 text-center">
-                                지원 조건: 244×244px · JPEG · ?MB 이하
-                            </span>
-                        </label>
+                        ) : (
+                            <label className="w-full max-w-[280px] sm:max-w-[320px] md:max-w-xl bg-white md:bg-slate-100 border-2 md:border-4 border-dashed border-blue-500 rounded-3xl py-12 sm:py-16 md:py-20 flex flex-col items-center justify-center gap-2 sm:gap-3 md:gap-4 cursor-pointer md:shadow-lg">
+                                <input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/gif"
+                                    className="hidden"
+                                    onChange={handleFileUpload}
+                                />
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 flex items-center justify-center mb-1 md:mb-2">
+                                    <BiImage size={40} className="text-blue-500 sm:w-12 sm:h-12" />
+                                </div>
+                                <span className="text-[11px] sm:text-xs md:text-base font-medium md:font-semibold text-gray-900 text-center px-4 sm:px-6 md:px-8 leading-tight sm:leading-normal">
+                                    파일을 업로드하려면 클릭하거나 끌어다 놓으세요
+                                </span>
+                                <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-600 text-center">
+                                    지원 조건: 224×224px · JPEG, PNG, GIF · 10MB 이하
+                                </span>
+                            </label>
+                        )}
                     </div>
                 </div>
 
@@ -96,7 +223,8 @@ export default function ResponsiveImageTransformPage() {
                         >
                             <span className="text-sm sm:text-base md:text-lg">{selected}</span>
                             <BiChevronDown
-                                className={`text-lg sm:text-xl md:text-2xl transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
+                                className={`text-lg sm:text-xl md:text-2xl transition-transform ${dropdownOpen ? "rotate-180" : ""
+                                    }`}
                             />
                         </button>
                         {dropdownOpen && (
@@ -130,14 +258,33 @@ export default function ResponsiveImageTransformPage() {
                     </button>
 
                     <button
-                        className="w-full py-2.5 sm:py-3 bg-gray-400 md:bg-blue-500 rounded-2xl font-bold text-white text-sm sm:text-base md:text-lg shadow-md flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-60 md:disabled:bg-gray-400"
-                        disabled={!selected}
+                        className="w-full py-2.5 sm:py-3 bg-blue-500 rounded-2xl font-bold text-white text-sm sm:text-base md:text-lg shadow-md flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-60 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        disabled={!hasImage || creating}
                         onClick={handleTransformImage}
                     >
-                        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        변환하기
+                        {creating ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                생성 중...
+                            </>
+                        ) : (
+                            <>
+                                <svg
+                                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M5 13l4 4L19 7"
+                                    />
+                                </svg>
+                                변환하기
+                            </>
+                        )}
                     </button>
                 </aside>
             </div>

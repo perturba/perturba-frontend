@@ -1,9 +1,10 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/authStore";
+import { ApiError } from "@/types/api";
 
 const getBaseURL = () => {
     if (process.env.NODE_ENV === 'development') {
-        return '/api'; 
+        return '/api';
     }
     return process.env.NEXT_PUBLIC_SERVER_API_URL;
 };
@@ -34,13 +35,13 @@ axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
 axiosInstance.interceptors.response.use(
     (response) => response,
-    async (error: AxiosError<any>) => {
+    async (error: AxiosError<ApiError>) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & {
             _retry?: boolean;
         };
 
         const status = error.response?.status;
-        const errorCode = (error.response?.data as any)?.code;
+        const errorCode = error.response?.data?.code;
 
         if (status === 401 && errorCode === "GUEST_SESSION_EXPIRED") {
             const { resetGuest, setIsAuthenticated } = useAuthStore.getState();

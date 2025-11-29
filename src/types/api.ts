@@ -22,7 +22,6 @@ export interface ApiMeta {
     requestId?: string;
 }
 
-// Job Types
 export type JobStatus = "PROGRESS" | "COMPLETED" | "FAILED";
 export type Intensity = "LOW" | "MEDIUM" | "HIGH";
 export type NotifyVia = "NONE" | "EMAIL" | "WEBHOOK";
@@ -83,7 +82,6 @@ export interface JobResultResponse {
     completedAt: string;
 }
 
-// Feedback Types
 export type StrengthEval = "VERY_WEAK" | "WEAK" | "MODERATE" | "STRONG" | "VERY_STRONG";
 export type DistortionEval = "VERY_LOW" | "LOW" | "MODERATE" | "HIGH" | "VERY_HIGH";
 
@@ -92,7 +90,6 @@ export interface FeedbackRequest {
     distortionEval: DistortionEval;
 }
 
-// Asset Types
 export type AssetKind = "INPUT" | "PERTURBED" | "DEEPFAKE" | "VISUALIZATION";
 
 export interface UploadUrlRequest {
@@ -129,7 +126,6 @@ export interface CompleteUploadResponse {
     sha256Hex: string;
 }
 
-// Auth Types
 export interface TokenResponse {
     accessToken: string;
     tokenType: string;
@@ -140,12 +136,10 @@ export interface MeResponse {
     userId: number;
 }
 
-// Guest Types
 export interface GuestSessionResponse {
     expiresAt: string;
 }
 
-// API Key Types
 export type ApiKeyStatus = "ACTIVE" | "REVOKED" | "EXPIRED";
 
 export interface ApiKeyMetaResponse {
@@ -170,7 +164,6 @@ export interface IssueApiKeyResponse extends ApiKeyMetaResponse {
     plaintext: string;
 }
 
-// External API Types
 export interface ExternalTransformRequest {
     inputAssetPublicId: string;
     intensity: Intensity;
@@ -189,14 +182,13 @@ export interface ExternalJobResultResponse {
 }
 
 export interface ExternalUploadImageRequest {
-    file: string; // base64
+    file: string;
 }
 
 export interface ExternalUploadImageResponse {
     assetPublicId: string;
 }
 
-// Internal Types (for backend use)
 export interface JobFailRequest {
     reason: string;
 }
