@@ -1,15 +1,26 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/authStore";
 
+const getBaseURL = () => {
+    if (process.env.NODE_ENV === 'development') {
+        return '/api'; 
+    }
+    return process.env.NEXT_PUBLIC_SERVER_API_URL;
+};
+
 export const axiosInstance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_SERVER_API_URL,
-    headers: { "Content-Type": "application/json" },
+    baseURL: getBaseURL(),
+    headers: {
+        "Content-Type": "application/json"
+    },
     withCredentials: true,
 });
 
 const refreshInstance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_SERVER_API_URL,
-    headers: { "Content-Type": "application/json" },
+    baseURL: getBaseURL(),
+    headers: {
+        "Content-Type": "application/json"
+    },
     withCredentials: true,
 });
 
