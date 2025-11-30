@@ -65,10 +65,8 @@ export default function Header() {
         setMenuOpen(false);
     };
 
-    const REDIRECT_URL = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI;
-
     const handleLogin = () => {
-        window.location.href = `${process.env.NEXT_PUBLIC_SERVER_API_URL}/oauth2/authorization/google?redirect_uri=${REDIRECT_URL}`;
+        window.location.href = `${process.env.NEXT_PUBLIC_SERVER_API_URL}/oauth2/authorization/google`;
     };
 
     const handleGuestLogin = async () => {
@@ -99,7 +97,7 @@ export default function Header() {
     return (
         <>
             <header
-                className={`h-14 flex items-center justify-between px-4 py-3 transition-colors duration-300 ${isLanding
+                className={`h-12 sm:h-14 flex items-center justify-between px-4 py-3 transition-colors duration-300 ${isLanding
                     ? "text-gray-50 fixed top-0 left-0 w-full z-50"
                     : "border-b-2 border-indigo-100 text-slate-800 bg-gray-50"
                     }`}
@@ -131,13 +129,13 @@ export default function Header() {
                             {!isAuthenticated && !isGuest ? (
                                 <>
                                     <button
-                                        className="px-3 py-1.5 rounded-xl border border-gray-50 text-gray-300 text-sm font-medium hover:bg-white/10 transition"
+                                        className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-xl border border-gray-50 text-gray-300 font-medium hover:bg-white/10 transition"
                                         onClick={handleGuestLogin}
                                     >
                                         게스트 로그인
                                     </button>
                                     <button
-                                        className="px-3 py-1.5 rounded-xl border border-gray-50 text-gray-300 text-sm font-medium hover:bg-white/10 transition"
+                                        className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-xl border border-gray-50 text-gray-300 font-medium hover:bg-white/10 transition"
                                         onClick={handleLogin}
                                     >
                                         로그인

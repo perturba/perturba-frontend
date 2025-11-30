@@ -145,7 +145,7 @@ export default function ImageTransformPage() {
 
                     <div className="flex-1 flex items-center justify-center px-4 sm:px-5 md:px-8 bg-gray-50">
                         {hasImage ? (
-                            <div className="w-full max-w-[280px] sm:max-w-[320px] md:max-w-xl bg-white rounded-3xl shadow-lg overflow-hidden border-2 border-blue-200">
+                            <div className="w-full max-w-[160px] sm:max-w-[320px] md:max-w-xl bg-white rounded-3xl shadow-lg overflow-hidden border-2 border-blue-200">
                                 <div className="relative aspect-square bg-gray-100">
                                     <img
                                         src={uploadedImage!.preview}
@@ -159,11 +159,11 @@ export default function ImageTransformPage() {
                                         <BiX size={20} className="text-gray-700" />
                                     </button>
                                 </div>
-                                <div className="p-4 bg-white">
-                                    <p className="text-sm text-gray-700 font-medium mb-2">
+                                <div className="p-2 sm:p-4 bg-white">
+                                    <p className="text-xs sm:text-sm text-gray-700 font-medium mb-2">
                                         현재 업로드된 이미지:
                                     </p>
-                                    <p className="text-sm text-gray-900 font-semibold truncate">
+                                    <p className="text-xs sm:text-sm text-gray-900 font-semibold truncate">
                                         {selectedFile!.name}
                                     </p>
                                     <p className="text-xs text-gray-500 mt-1">
