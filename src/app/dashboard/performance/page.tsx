@@ -11,14 +11,14 @@ const chartData = [
 
 export default function ResponsivePerformancePage() {
     return (
-        <div className="flex-1 flex flex-col bg-white md:bg-gray-50 overflow-hidden">
+        <div className="flex flex-1 flex-col bg-white md:bg-gray-50 overflow-hidden">
             <div className="px-3 sm:px-4 md:px-16 py-3 sm:py-4 md:py-12 bg-white md:bg-gray-50">
                 <h1 className="text-sm sm:text-base md:text-2xl font-semibold md:font-bold text-gray-900">
                     서비스 성능 보기
                 </h1>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-16 py-3 sm:py-4 md:py-0">
+            <div className="flex-1 flex justify-center item-center overflow-y-auto px-3 sm:px-4 md:px-16 py-3 sm:py-4 md:py-0">
                 <div className="space-y-4 sm:space-y-5 md:space-y-10 max-w-7xl pb-4 sm:pb-6 md:pb-0">
                     <section className="hidden md:block">
                         <div className="bg-white rounded-2xl p-8 md:p-10 border-4 border-blue-500 shadow-lg">
