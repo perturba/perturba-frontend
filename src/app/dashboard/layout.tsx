@@ -10,8 +10,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const { isAuthenticated, loginType } = useAuthStore();
 
     const isGuest = loginType === "GUEST";
-    const guestAllowedPaths = ["/dashboard/image-upload"];
-    const isGuestAllowedPath = guestAllowedPaths.includes(pathname);
+
+    const guestAllowedExactPaths = ["/dashboard/image-upload"];
+    const isGuestAllowedDynamicPath = pathname.startsWith("/dashboard/image-detail/");
+
+    const isGuestAllowedPath =
+        guestAllowedExactPaths.includes(pathname) || isGuestAllowedDynamicPath;
 
     useEffect(() => {
         if (!isAuthenticated && !isGuest) {
@@ -23,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             router.replace("/dashboard/image-upload");
             return;
         }
-    }, [isAuthenticated, isGuest, router]);
+    }, [isAuthenticated, isGuest, isGuestAllowedPath, router]);
 
     return (
         <div className="flex-1 min-h-0 flex flex-col">

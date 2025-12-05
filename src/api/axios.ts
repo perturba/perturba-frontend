@@ -60,8 +60,11 @@ axiosInstance.interceptors.response.use(
         const status = error.response?.status;
         const errorCode = error.response?.data?.code;
 
+        const { loginType, resetGuest, setIsAuthenticated, setAccessToken, logout } =
+            useAuthStore.getState();
+        const isGuest = loginType === "GUEST";
+
         if (status === 401 && errorCode === "GUEST_SESSION_EXPIRED") {
-            const { resetGuest, setIsAuthenticated } = useAuthStore.getState();
             resetGuest();
             setIsAuthenticated(false);
             alert("게스트 세션이 만료되어 초기화되었습니다.");
@@ -70,6 +73,10 @@ axiosInstance.interceptors.response.use(
         }
 
         if (originalRequest.url === "/v1/auth/refresh") {
+            return Promise.reject(error);
+        }
+
+        if (isGuest) {
             return Promise.reject(error);
         }
 
@@ -98,7 +105,7 @@ axiosInstance.interceptors.response.use(
                 }>("/v1/auth/refresh");
 
                 const newAccessToken = res.data.data.access_token;
-                useAuthStore.getState().setAccessToken(newAccessToken);
+                setAccessToken(newAccessToken);
 
                 processQueue();
 
@@ -108,7 +115,7 @@ axiosInstance.interceptors.response.use(
                 return axiosInstance(originalRequest);
             } catch (refreshError) {
                 processQueue(refreshError as Error);
-                useAuthStore.getState().logout();
+                logout();
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;
