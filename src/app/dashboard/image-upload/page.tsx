@@ -85,7 +85,7 @@ export default function ImageUploadPage() {
                             <BiImage size={40} className="text-blue-500 sm:w-12 sm:h-12" />
                         </div>
                         <span className="text-[11px] sm:text-xs md:text-base font-medium text-gray-900 text-center px-3 sm:px-4 md:px-8 leading-tight sm:leading-normal">
-                            {uploading ? `업로드 중... ${Math.round(uploadProgress)}%` : "파일을 업로드하려면 클릭하거나 끌어다 놓으세요"}
+                            {uploading ? `업로드 중... ${Math.round(uploadProgress)}%` : "파일을 업로드하려면 클릭하세요"}
                         </span>
                         <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-600 text-center">
                             지원 조건: 224×224px · JPEG, PNG, GIF · 10MB 이하
