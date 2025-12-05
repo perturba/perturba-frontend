@@ -1,4 +1,4 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig, AxiosInstance } from "axios";
 import { useAuthStore } from "@/store/authStore";
 import { ApiError } from "@/types/api";
 
@@ -9,21 +9,34 @@ const getBaseURL = () => {
     return process.env.NEXT_PUBLIC_SERVER_API_URL;
 };
 
-export const axiosInstance = axios.create({
+const defaultConfig = {
     baseURL: getBaseURL(),
     headers: {
         "Content-Type": "application/json"
     },
     withCredentials: true,
-});
+};
 
-const refreshInstance = axios.create({
-    baseURL: getBaseURL(),
-    headers: {
-        "Content-Type": "application/json"
-    },
-    withCredentials: true,
-});
+export const axiosInstance: AxiosInstance = axios.create(defaultConfig);
+
+const refreshInstance: AxiosInstance = axios.create(defaultConfig);
+
+let isRefreshing = false;
+let failedQueue: Array<{
+    resolve: (value?: unknown) => void;
+    reject: (reason?: unknown) => void;
+}> = [];
+
+const processQueue = (error: Error | null = null) => {
+    failedQueue.forEach(promise => {
+        if (error) {
+            promise.reject(error);
+        } else {
+            promise.resolve();
+        }
+    });
+    failedQueue = [];
+};
 
 axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     const token = useAuthStore.getState().accessToken;
@@ -40,6 +53,10 @@ axiosInstance.interceptors.response.use(
             _retry?: boolean;
         };
 
+        if (!originalRequest) {
+            return Promise.reject(error);
+        }
+
         const status = error.response?.status;
         const errorCode = error.response?.data?.code;
 
@@ -47,47 +64,54 @@ axiosInstance.interceptors.response.use(
             const { resetGuest, setIsAuthenticated } = useAuthStore.getState();
             resetGuest();
             setIsAuthenticated(false);
-
             alert("게스트 세션이 만료되어 초기화되었습니다.");
-            useAuthStore.getState().resetGuest();
             window.location.href = "/";
-
             return Promise.reject(error);
         }
 
-        if (originalRequest?.url === "/v1/auth/refresh") {
+        if (originalRequest.url === "/v1/auth/refresh") {
             return Promise.reject(error);
         }
 
         if (status === 401 && !originalRequest._retry) {
+            if (isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then(() => axiosInstance(originalRequest))
+                    .catch(err => Promise.reject(err));
+            }
+
             originalRequest._retry = true;
+            isRefreshing = true;
+
             try {
-                interface ApiResponse<T> {
-                    ok: boolean;
-                    data: T;
-                    meta: Record<string, unknown>;
-                }
                 interface TokenResponse {
                     access_token: string;
                     expires_in: number;
                     token_type: "Bearer";
                 }
 
-                const res = await refreshInstance.post<ApiResponse<TokenResponse>>(
-                    "/v1/auth/refresh"
-                );
-                const newAccessToken = res.data.data.access_token;
+                const res = await refreshInstance.post<{
+                    ok: boolean;
+                    data: TokenResponse;
+                }>("/v1/auth/refresh");
 
+                const newAccessToken = res.data.data.access_token;
                 useAuthStore.getState().setAccessToken(newAccessToken);
+
+                processQueue();
 
                 if (originalRequest.headers) {
                     originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
                 }
-
                 return axiosInstance(originalRequest);
-            } catch {
+            } catch (refreshError) {
+                processQueue(refreshError as Error);
                 useAuthStore.getState().logout();
-                return Promise.reject(error);
+                return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
             }
         }
 
