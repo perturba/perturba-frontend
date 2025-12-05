@@ -98,7 +98,7 @@ export default function ApiKeySection() {
         }
 
         try {
-            await axiosInstance.delete("/v1/apikeys/1");
+            await axiosInstance.delete("/v1/apikeys");
             setApiKey(null);
 
             window.dispatchEvent(
