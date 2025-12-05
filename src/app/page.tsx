@@ -1,21 +1,18 @@
-import Hero from "@/components/Hero";
-import InvisibleCloaking from "@/components/InvisibleCloaking";
-import HowToUse from "@/components/HowToUse";
-import Features from "@/components/Features";
-import Background from "@/components/Background";
-import AnimatedSection from "@/components/AnimatedSection";
+import Hero from "@/components/landing/Hero";
+import InvisibleCloaking from "@/components/landing/InvisibleCloaking";
+import HowToUse from "@/components/landing/HowToUse";
+import Features from "@/components/landing/Features";
+import Background from "@/components/landing/Background";
+import ScrollContainer from "@/components/landing/ScrollContainer";
 
 export default function Page() {
   return (
-    <main
-      className="h-screen w-screen overflow-y-scroll snap-y snap-mandatory"
-      style={{ scrollBehavior: "smooth" }}
-    >
+    <ScrollContainer>
       <Background />
-      <AnimatedSection><Hero /></AnimatedSection>
-      <AnimatedSection><InvisibleCloaking /></AnimatedSection>
-      <AnimatedSection><HowToUse /></AnimatedSection>
-      <AnimatedSection><Features /></AnimatedSection>
-    </main>
+      <Hero />
+      <InvisibleCloaking />
+      <HowToUse />
+      <Features />
+    </ScrollContainer>
   );
 }

@@ -25,23 +25,27 @@ export default function Features() {
     ];
 
     return (
-        <section className="h-screen w-screen snap-start flex flex-col items-center justify-center px-6 md:px-12 py-48 relative overflow-hidden">
-            <h2 className="text-4xl md:text-5xl font-black mb-14 tracking-tighter z-10 text-slate-100 animate-fade-in-up">
+        <section className="min-h-screen w-screen snap-start flex flex-col items-center justify-center px-4 sm:px-6 md:px-12 lg:px-16 py-24 sm:py-32 md:py-48 relative overflow-hidden">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-8 sm:mb-10 md:mb-14 tracking-tighter z-10 text-white animate-fade-in-up text-center">
                 Perturba의 특징
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl w-full z-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 md:gap-10 max-w-xs sm:max-w-2xl lg:max-w-5xl w-full z-10">
                 {list.map((f, i) => (
                     <div
                         key={f.title}
-                        className={`relative bg-white/10 border border-white/10 backdrop-blur-xl p-10 rounded-3xl flex flex-row items-start gap-5 drop-shadow-xl transition-transform duration-300 will-change-transform hover:scale-105 hover:ring-2 hover:ring-indigo-400 animate-fade-in-up`}
+                        className={`relative bg-white/10 border border-white/10 backdrop-blur-xl p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl flex flex-row items-start gap-3 sm:gap-4 md:gap-5 drop-shadow-xl transition-transform duration-300 will-change-transform hover:scale-105 hover:ring-2 hover:ring-indigo-400 animate-fade-in-up`}
                         style={{ animationDelay: `${i * 0.11 + 0.14}s` }}
                     >
-                        <div className="flex flex-col items-center mt-1 mr-2">
+                        <div className="flex flex-col items-center mt-0.5 sm:mt-1 mr-1 sm:mr-2 flex-shrink-0 scale-90 sm:scale-100">
                             {f.icon}
                         </div>
-                        <div className="text-left">
-                            <h3 className="text-lg font-semibold mb-2 text-slate-100">{f.title}</h3>
-                            <p className="text-gray-300 text-sm">{f.desc}</p>
+                        <div className="text-left flex-1">
+                            <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-1.5 sm:mb-2 text-white">
+                                {f.title}
+                            </h3>
+                            <p className="text-white text-xs sm:text-sm leading-relaxed">
+                                {f.desc}
+                            </p>
                         </div>
                     </div>
                 ))}

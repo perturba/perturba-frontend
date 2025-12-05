@@ -21,29 +21,33 @@ export default function InvisibleCloaking() {
     ];
 
     return (
-        <section className="h-screen w-screen snap-start flex flex-col items-center justify-center px-6 md:px-12 py-48 relative overflow-hidden">
-            <h2 className="text-2xl md:text-3xl font-black mb-10 z-10 text-slate-100 animate-fade-in-up">
+        <section className="min-h-screen w-screen snap-start flex flex-col items-center justify-center px-4 sm:px-6 md:px-12 lg:px-16 py-24 sm:py-32 md:py-48 relative overflow-hidden">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black mb-6 sm:mb-8 md:mb-10 z-10 text-white animate-fade-in-up text-center px-4">
                 비가시성 클로킹이란 무엇인가요?
             </h2>
-            <p className="text-gray-200 text-center max-w-3xl leading-relaxed mb-16 text-base z-10 animate-fade-in-up">
+            <p className="text-white text-center max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-3xl leading-relaxed mb-10 sm:mb-12 md:mb-16 text-xs sm:text-sm md:text-base z-10 animate-fade-in-up px-4">
                 비가시성 클로킹은 사진에 <strong className="font-bold text-white">눈에 보이지 않는 보호 신호</strong>를 더해
-                <br />
+                <br className="hidden sm:block" />
                 AI가 이미지를 정확히 인식하거나 오용하지 못하도록 막아주는 기술입니다.
-                <br />
+                <br className="hidden sm:block" />
                 사진을 업로드하면 자동으로 이 보호가 적용되어,
                 다양한 AI 오인식·딥페이크로부터 <span className="font-semibold text-indigo-200">내 이미지를 안전하게</span> 지킬 수 있습니다.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-5xl w-full z-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 lg:gap-10 max-w-xs sm:max-w-2xl lg:max-w-5xl w-full z-10 px-4">
                 {features.map((item, i) => (
                     <div
                         key={item.title}
-                        className="relative bg-white/10 border border-white/10 backdrop-blur-xl p-8 rounded-3xl flex flex-col items-center gap-6 drop-shadow-xl transition-transform duration-300 will-change-transform hover:scale-105 hover:ring-2 hover:ring-indigo-300 animate-fade-in-up"
+                        className="relative bg-white/10 border border-white/10 backdrop-blur-xl p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl flex flex-col items-center gap-3 sm:gap-4 md:gap-6 drop-shadow-xl transition-transform duration-300 will-change-transform hover:scale-105 hover:ring-2 hover:ring-indigo-300 animate-fade-in-up"
                         style={{ animationDelay: `${i * 0.13 + 0.12}s` }}
                     >
-                        <div>{item.icon}</div>
-                        <h3 className="font-semibold text-base text-slate-100 mt-3">{item.title}</h3>
-                        <p className="text-gray-300 text-base text-center leading-snug">{item.text}</p>
+                        <div className="scale-75 sm:scale-90 md:scale-100">{item.icon}</div>
+                        <h3 className="font-semibold text-sm sm:text-base text-white mt-1 sm:mt-2 md:mt-3 text-center">
+                            {item.title}
+                        </h3>
+                        <p className="text-white text-xs sm:text-sm md:text-base text-center leading-snug">
+                            {item.text}
+                        </p>
                     </div>
                 ))}
             </div>
@@ -53,7 +57,7 @@ export default function InvisibleCloaking() {
                 alt="cube"
                 width={200}
                 height={200}
-                className="absolute right-[10%] bottom-[5%] opacity-70 hidden md:block"
+                className="absolute right-[5%] sm:right-[10%] bottom-[5%] opacity-70 hidden md:block w-32 h-32 lg:w-48 lg:h-48 xl:w-52 xl:h-52"
             />
         </section>
     );
