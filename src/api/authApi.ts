@@ -22,12 +22,20 @@ export async function checkAuthStatus(): Promise<boolean> {
         accessToken,
         setAccessToken,
         setLoginType,
-        setGuestExpiresAt,
         setIsAuthenticated,
     } = useAuthStore.getState();
 
     if (accessToken) {
         setLoginType("OAUTH");
+        setIsAuthenticated(true);
+        return true;
+    }
+
+    const { loginType } = useAuthStore();
+
+    const isGuest = loginType === "GUEST";
+
+    if (isGuest) {
         setIsAuthenticated(true);
         return true;
     }
@@ -45,7 +53,6 @@ export async function checkAuthStatus(): Promise<boolean> {
     }
 
     setLoginType("");
-    setGuestExpiresAt(null);
     setIsAuthenticated(false);
     return false;
 }
