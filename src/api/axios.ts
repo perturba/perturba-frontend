@@ -60,12 +60,12 @@ axiosInstance.interceptors.response.use(
         const status = error.response?.status;
         const errorCode = error.response?.data?.code;
 
-        const { loginType, resetGuest, setIsAuthenticated, setAccessToken, logout } =
+        const { loginType, setIsAuthenticated, setAccessToken, logout } =
             useAuthStore.getState();
         const isGuest = loginType === "GUEST";
 
         if (status === 401 && errorCode === "GUEST_SESSION_EXPIRED") {
-            resetGuest();
+            logout();
             setIsAuthenticated(false);
             alert("게스트 세션이 만료되어 초기화되었습니다.");
             window.location.href = "/";
