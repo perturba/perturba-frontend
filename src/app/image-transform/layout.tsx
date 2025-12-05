@@ -6,15 +6,14 @@ import { useAuthStore } from "@/store/authStore";
 
 export default function ImageTransformLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
-    const { isAuthenticated, loginType } = useAuthStore();
-    const isGuest = loginType === "GUEST";
+    const { isAuthenticated } = useAuthStore();
 
     useEffect(() => {
-        if (!isAuthenticated && !isGuest) {
+        if (!isAuthenticated) {
             router.replace("/");
             return;
         }
-    }, [isAuthenticated, isGuest, router]);
+    }, [isAuthenticated, router]);
 
     return (
         <div className="flex flex-row h-full flex-1">

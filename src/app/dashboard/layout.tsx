@@ -18,7 +18,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         guestAllowedExactPaths.includes(pathname) || isGuestAllowedDynamicPath;
 
     useEffect(() => {
-        if (!isAuthenticated && !isGuest) {
+        if (!isAuthenticated) {
             router.replace("/");
             return;
         }
