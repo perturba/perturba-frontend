@@ -12,14 +12,117 @@ export interface JobItem {
 
 interface JobStatusState {
     jobs: JobItem[];
-
     addJob: (job: JobItem) => void;
     updateJobStatus: (publicId: string, status: JobStatus, completedAt?: string) => void;
     removeJob: (publicId: string) => void;
     getJobsByStatus: (status: JobStatus) => JobItem[];
 }
 
-const eventSources = new Map<string, EventSource>();
+class EventSourceManager {
+    private sources = new Map<string, EventSource>();
+
+    subscribe(publicId: string, fileName: string, store: JobStatusState) {
+        if (this.sources.has(publicId)) {
+            return;
+        }
+
+        const url = `${process.env.NEXT_PUBLIC_SERVER_API_URL}/v1/jobs/${publicId}/events`;
+        const eventSource = new EventSource(url, { withCredentials: true });
+
+        this.setupEventHandlers(eventSource, publicId, fileName, store);
+
+        this.sources.set(publicId, eventSource);
+    }
+
+    private setupEventHandlers(
+        eventSource: EventSource,
+        publicId: string,
+        fileName: string,
+        store: JobStatusState
+    ) {
+        eventSource.addEventListener("job-created", (event) => {
+            const data = JSON.parse(event.data);
+            store.addJob({
+                publicId: data.publicId,
+                fileName,
+                status: "PROGRESS",
+                createdAt: data.createdAt || new Date().toISOString(),
+            });
+        });
+
+        eventSource.addEventListener("job-completed", (event) => {
+            const data = JSON.parse(event.data);
+            store.updateJobStatus(publicId, "COMPLETED", data.completedAt);
+
+            this.notifyUser(fileName, "success");
+            this.sendToast(fileName, "success");
+            this.cleanup(publicId);
+        });
+
+        eventSource.addEventListener("job-failed", () => {
+            store.updateJobStatus(publicId, "FAILED");
+
+            this.sendToast(fileName, "error");
+            this.cleanup(publicId);
+        });
+
+        eventSource.onerror = () => {
+            this.cleanup(publicId);
+        };
+    }
+
+    private notifyUser(fileName: string, type: "success" | "error") {
+        if (typeof window === "undefined" || !("Notification" in window)) {
+            return;
+        }
+
+        if (Notification.permission === "granted") {
+            const message = type === "success"
+                ? `${fileName} 변환이 완료되었습니다.`
+                : `${fileName} 변환에 실패했습니다.`;
+
+            new Notification(type === "success" ? "작업 완료" : "작업 실패", {
+                body: message,
+                icon: "/perturba_black.png",
+            });
+        }
+    }
+
+    private sendToast(fileName: string, type: "success" | "error") {
+        const message = type === "success"
+            ? `${fileName} 변환이 완료되었습니다.`
+            : `${fileName} 변환에 실패했습니다.`;
+
+        window.dispatchEvent(
+            new CustomEvent("job-toast", {
+                detail: { type, message },
+            })
+        );
+    }
+
+    private cleanup(publicId: string) {
+        const eventSource = this.sources.get(publicId);
+        if (eventSource) {
+            eventSource.close();
+            this.sources.delete(publicId);
+        }
+    }
+
+    unsubscribe(publicId: string) {
+        this.cleanup(publicId);
+    }
+
+    unsubscribeAll() {
+        this.sources.forEach((es) => es.close());
+        this.sources.clear();
+    }
+
+    has(publicId: string): boolean {
+        return this.sources.has(publicId);
+    }
+}
+
+const eventSourceManager = new EventSourceManager();
 
 export const useJobStatusStore = create<JobStatusState>()(
     persist(
@@ -28,8 +131,9 @@ export const useJobStatusStore = create<JobStatusState>()(
 
             addJob: (job) =>
                 set((state) => {
-                    const exists = state.jobs.some((j) => j.publicId === job.publicId);
-                    if (exists) return state;
+                    if (state.jobs.some((j) => j.publicId === job.publicId)) {
+                        return state;
+                    }
                     return { jobs: [job, ...state.jobs] };
                 }),
 
@@ -44,11 +148,7 @@ export const useJobStatusStore = create<JobStatusState>()(
 
             removeJob: (publicId) =>
                 set((state) => {
-                    const eventSource = eventSources.get(publicId);
-                    if (eventSource) {
-                        eventSource.close();
-                        eventSources.delete(publicId);
-                    }
+                    eventSourceManager.unsubscribe(publicId);
                     return {
                         jobs: state.jobs.filter((job) => job.publicId !== publicId),
                     };
@@ -66,83 +166,14 @@ export const useJobStatusStore = create<JobStatusState>()(
 );
 
 export const subscribeToJob = (publicId: string, fileName: string) => {
-    if (eventSources.has(publicId)) {
-        return;
-    }
-
-    const url = `${process.env.NEXT_PUBLIC_SERVER_API_URL}/v1/jobs/${publicId}/events`;
-    const eventSource = new EventSource(url, { withCredentials: true });
-
-    eventSource.addEventListener("job-created", (event) => {
-        const data = JSON.parse(event.data);
-        useJobStatusStore.getState().addJob({
-            publicId: data.publicId,
-            fileName,
-            status: "PROGRESS",
-            createdAt: data.createdAt || new Date().toISOString(),
-        });
-    });
-
-    eventSource.addEventListener("job-completed", (event) => {
-        const data = JSON.parse(event.data);
-        useJobStatusStore.getState().updateJobStatus(publicId, "COMPLETED", data.completedAt);
-
-        if (typeof window !== "undefined" && "Notification" in window) {
-            if (Notification.permission === "granted") {
-                new Notification("작업 완료", {
-                    body: `${fileName} 변환이 완료되었습니다.`,
-                    icon: "/perturba_black.png",
-                });
-            }
-        }
-
-        window.dispatchEvent(
-            new CustomEvent("job-toast", {
-                detail: {
-                    type: "success",
-                    message: `${fileName} 변환이 완료되었습니다.`,
-                },
-            })
-        );
-
-        eventSource.close();
-        eventSources.delete(publicId);
-    });
-
-    eventSource.addEventListener("job-failed", (event) => {
-        const data = JSON.parse(event.data);
-        useJobStatusStore.getState().updateJobStatus(publicId, "FAILED");
-
-        window.dispatchEvent(
-            new CustomEvent("job-toast", {
-                detail: {
-                    type: "error",
-                    message: `${fileName} 변환에 실패했습니다.`,
-                },
-            })
-        );
-
-        eventSource.close();
-        eventSources.delete(publicId);
-    });
-
-    eventSource.onerror = () => {
-        eventSource.close();
-        eventSources.delete(publicId);
-    };
-
-    eventSources.set(publicId, eventSource);
+    const store = useJobStatusStore.getState();
+    eventSourceManager.subscribe(publicId, fileName, store);
 };
 
 export const unsubscribeFromJob = (publicId: string) => {
-    const eventSource = eventSources.get(publicId);
-    if (eventSource) {
-        eventSource.close();
-        eventSources.delete(publicId);
-    }
+    eventSourceManager.unsubscribe(publicId);
 };
 
 export const unsubscribeAll = () => {
-    eventSources.forEach((es) => es.close());
-    eventSources.clear();
+    eventSourceManager.unsubscribeAll();
 };
