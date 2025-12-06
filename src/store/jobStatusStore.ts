@@ -15,6 +15,7 @@ interface JobStatusState {
     addJob: (job: JobItem) => void;
     updateJobStatus: (publicId: string, status: JobStatus, completedAt?: string) => void;
     removeJob: (publicId: string) => void;
+    clearAllJobs: () => void;
     getJobsByStatus: (status: JobStatus) => JobItem[];
 }
 
@@ -153,6 +154,11 @@ export const useJobStatusStore = create<JobStatusState>()(
                         jobs: state.jobs.filter((job) => job.publicId !== publicId),
                     };
                 }),
+
+            clearAllJobs: () => {
+                eventSourceManager.unsubscribeAll();
+                set({ jobs: [] });
+            },
 
             getJobsByStatus: (status) => {
                 return get().jobs.filter((job) => job.status === status);

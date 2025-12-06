@@ -14,6 +14,7 @@ import Sidebar from "./Sidebar";
 import { logout as apiLogout } from "@/api/authApi";
 import { getGuestSession } from "@/api/guestControllerApi";
 import { useAuthStore } from "@/store/authStore";
+import { useJobStatusStore } from "@/store/jobStatusStore";
 
 export type SidebarMenuItem = {
     label: string;
@@ -57,7 +58,9 @@ export default function Header() {
     const logout = useAuthStore((state) => state.logout);
     const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
 
-    const isGuest = !isAuthenticated && loginType === "GUEST";
+    const clearAllJobs = useJobStatusStore((state) => state.clearAllJobs);
+
+    const isGuest = isAuthenticated && loginType === "GUEST";
 
     const handleMove = (href: string, label: string) => {
         router.push(href);
@@ -82,10 +85,19 @@ export default function Header() {
 
     const handleLogout = async () => {
         try {
-            await apiLogout();
+            if (loginType === "OAUTH") {
+                await apiLogout();
+            }
+
             logout();
+            clearAllJobs();
+
+            router.push("/");
         } catch (error) {
             console.error("Logout failed:", error);
+            logout();
+            clearAllJobs();
+            router.push("/");
         }
     };
 

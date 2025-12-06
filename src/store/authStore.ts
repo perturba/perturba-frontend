@@ -35,6 +35,5 @@ export const useAuthStore = create<AuthState>((set) => ({
             isAuthenticated: false,
             loginType: "",
         });
-        window.location.href = "/";
     },
 }));
