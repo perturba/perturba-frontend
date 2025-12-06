@@ -9,6 +9,7 @@ import { useJobStatusStore, subscribeToJob } from "@/store/jobStatusStore";
 import type { Intensity } from "@/types/api";
 import { createJob } from "@/api/jobApi";
 import { useAuthStore } from "@/store/authStore";
+import { processImageFile } from "@/utils/imageResize";
 
 const strengthOptions = ["높음", "중간", "낮음"] as const;
 type Strength = typeof strengthOptions[number];
@@ -23,9 +24,11 @@ export default function ImageTransformPage() {
     const router = useRouter();
     const [selected, setSelected] = useState<Strength>("중간");
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [showRecommendation, setShowRecommendation] = useState(false);
     const [creating, setCreating] = useState(false);
+    const [processing, setProcessing] = useState(false);
     const { loginType } = useAuthStore();
     const isGuest = loginType === "GUEST";
 
@@ -44,12 +47,60 @@ export default function ImageTransformPage() {
         }
 
         setSelectedFile(uploadedImage.file);
+        setPreviewUrl(uploadedImage.preview);
     }, [uploadedImage, router]);
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    useEffect(() => {
+        return () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        setSelectedFile(file);
+
+        e.target.value = "";
+
+        try {
+            setProcessing(true);
+
+            const { file: processedFile, resized } = await processImageFile(file);
+
+            if (resized) {
+                window.dispatchEvent(
+                    new CustomEvent("job-toast", {
+                        detail: {
+                            type: "success",
+                            message: "이미지가 224x224로 자동 조정되었습니다.",
+                        },
+                    })
+                );
+            }
+
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+
+            const newPreview = URL.createObjectURL(processedFile);
+            setSelectedFile(processedFile);
+            setPreviewUrl(newPreview);
+        } catch (error) {
+            console.error("Image processing failed:", error);
+            const errorMessage = error instanceof Error ? error.message : "이미지 처리에 실패했습니다.";
+            window.dispatchEvent(
+                new CustomEvent("job-toast", {
+                    detail: {
+                        type: "error",
+                        message: errorMessage,
+                    },
+                })
+            );
+        } finally {
+            setProcessing(false);
+        }
     };
 
     const handleTransformImage = async () => {
@@ -88,6 +139,10 @@ export default function ImageTransformPage() {
                     })
                 );
 
+                if (previewUrl) {
+                    URL.revokeObjectURL(previewUrl);
+                }
+
                 clearUploadedImage();
                 if (isGuest) router.push("/dashboard/image-upload");
                 else router.push("/dashboard/list");
@@ -110,6 +165,9 @@ export default function ImageTransformPage() {
     };
 
     const handleGoBack = () => {
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+        }
         clearUploadedImage();
         router.push("/dashboard/image-upload");
     };
@@ -119,10 +177,14 @@ export default function ImageTransformPage() {
     };
 
     const handleRemoveImage = () => {
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+        }
         setSelectedFile(null);
+        setPreviewUrl(null);
     };
 
-    const hasImage = selectedFile && uploadedImage;
+    const hasImage = selectedFile && uploadedImage && previewUrl;
 
     return (
         <>
@@ -150,27 +212,38 @@ export default function ImageTransformPage() {
                         {hasImage ? (
                             <div className="w-full max-w-[160px] sm:max-w-[320px] md:max-w-xl bg-white rounded-3xl shadow-lg overflow-hidden border-2 border-blue-200">
                                 <div className="relative aspect-square bg-gray-100">
-                                    <img
-                                        src={uploadedImage!.preview}
-                                        alt="Preview"
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <button
-                                        onClick={handleRemoveImage}
-                                        className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition"
-                                    >
-                                        <BiX size={20} className="text-gray-700" />
-                                    </button>
+                                    {processing ? (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <div className="flex flex-col items-center gap-3">
+                                                <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+                                                <p className="text-sm text-gray-600">이미지 처리 중...</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <img
+                                                src={previewUrl}
+                                                alt="Preview"
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <button
+                                                onClick={handleRemoveImage}
+                                                className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition"
+                                            >
+                                                <BiX size={20} className="text-gray-700" />
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                                 <div className="p-2 sm:p-4 bg-white">
                                     <p className="text-xs sm:text-sm text-gray-700 font-medium mb-2">
                                         현재 업로드된 이미지:
                                     </p>
                                     <p className="text-xs sm:text-sm text-gray-900 font-semibold truncate">
-                                        {selectedFile!.name}
+                                        {selectedFile.name}
                                     </p>
                                     <p className="text-xs text-gray-500 mt-1">
-                                        {(selectedFile!.size / 1024 / 1024).toFixed(2)} MB
+                                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                                     </p>
                                 </div>
                             </div>
@@ -189,7 +262,7 @@ export default function ImageTransformPage() {
                                     파일을 업로드하려면 클릭하세요
                                 </span>
                                 <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-600 text-center">
-                                    지원 조건: 224×224px · JPEG · 10MB 이하
+                                    JPEG · 10MB 이하 · 자동 리사이징 지원
                                 </span>
                             </label>
                         )}
@@ -252,7 +325,7 @@ export default function ImageTransformPage() {
 
                     <button
                         className="w-full py-2.5 sm:py-3 bg-blue-500 rounded-2xl font-bold text-white text-sm sm:text-base md:text-lg shadow-md flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-60 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled={!hasImage || creating}
+                        disabled={!hasImage || creating || processing}
                         onClick={handleTransformImage}
                     >
                         {creating ? (

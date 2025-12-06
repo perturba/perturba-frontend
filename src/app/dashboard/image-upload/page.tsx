@@ -6,30 +6,50 @@ import { useState } from "react";
 import { BiDotsVerticalRounded, BiImage } from "react-icons/bi";
 import { uploadImage } from "@/api/assetApi";
 import { useImageUploadStore } from "@/store/imageUploadStore";
+import { processImageFile } from "@/utils/imageResize";
 
 export default function ImageUploadPage() {
     const router = useRouter();
     const [showStatus, setShowStatus] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [processingMessage, setProcessingMessage] = useState("");
     const setUploadedImage = useImageUploadStore((state) => state.setUploadedImage);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        e.target.value = "";
+
         try {
             setUploading(true);
             setUploadProgress(0);
+            setProcessingMessage("이미지 처리 중...");
 
-            const result = await uploadImage(file, (progress) => {
+            const { file: processedFile, resized } = await processImageFile(file);
+
+            if (resized) {
+                window.dispatchEvent(
+                    new CustomEvent("job-toast", {
+                        detail: {
+                            type: "success",
+                            message: "이미지가 224x224로 자동 조정되었습니다.",
+                        },
+                    })
+                );
+            }
+
+            setProcessingMessage("업로드 중...");
+
+            const result = await uploadImage(processedFile, (progress) => {
                 setUploadProgress(progress);
             });
 
-            const preview = URL.createObjectURL(file);
+            const preview = URL.createObjectURL(processedFile);
 
             setUploadedImage({
-                file,
+                file: processedFile,
                 assetId: result.assetId,
                 preview,
             });
@@ -37,23 +57,31 @@ export default function ImageUploadPage() {
             router.push("/image-transform");
         } catch (error) {
             console.error("Upload failed:", error);
+            const errorMessage = error instanceof Error ? error.message : "이미지 업로드에 실패했습니다.";
             window.dispatchEvent(
                 new CustomEvent("job-toast", {
                     detail: {
                         type: "error",
-                        message: "이미지 업로드에 실패했습니다. 다시 시도해주세요.",
+                        message: errorMessage,
                     },
                 })
             );
         } finally {
             setUploading(false);
             setUploadProgress(0);
+            setProcessingMessage("");
         }
     };
 
     const handleJobClick = (publicId: string) => {
         setShowStatus(false);
         router.push(`/dashboard/image-detail/${publicId}`);
+    };
+
+    const getUploadStatusText = () => {
+        if (processingMessage) return processingMessage;
+        if (uploadProgress > 0) return `업로드 중... ${Math.round(uploadProgress)}%`;
+        return "파일을 업로드하려면 클릭하세요";
     };
 
     return (
@@ -82,13 +110,17 @@ export default function ImageUploadPage() {
                             disabled={uploading}
                         />
                         <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center mb-1 md:mb-2">
-                            <BiImage size={40} className="text-blue-500 sm:w-12 sm:h-12" />
+                            {uploading ? (
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+                            ) : (
+                                <BiImage size={40} className="text-blue-500 sm:w-12 sm:h-12" />
+                            )}
                         </div>
                         <span className="text-[11px] sm:text-xs md:text-base font-medium text-gray-900 text-center px-3 sm:px-4 md:px-8 leading-tight sm:leading-normal">
-                            {uploading ? `업로드 중... ${Math.round(uploadProgress)}%` : "파일을 업로드하려면 클릭하세요"}
+                            {getUploadStatusText()}
                         </span>
                         <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-600 text-center">
-                            지원 조건: 224×224px · JPEG · 10MB 이하
+                            JPEG · 10MB 이하 · 자동 리사이징 지원
                         </span>
                     </label>
                 </div>
@@ -109,8 +141,9 @@ export default function ImageUploadPage() {
                                 <span className="text-sm sm:text-base font-medium text-slate-950">10MB</span>
                             </div>
                             <div className="flex flex-col gap-0.5 sm:gap-1">
-                                <span className="text-xs sm:text-sm text-gray-600">최대 해상도</span>
+                                <span className="text-xs sm:text-sm text-gray-600">처리 해상도</span>
                                 <span className="text-sm sm:text-base font-medium text-gray-900">224px x 224px</span>
+                                <span className="text-xs text-gray-500">*다른 해상도는 자동 조정됩니다</span>
                             </div>
                         </div>
 
@@ -118,12 +151,17 @@ export default function ImageUploadPage() {
                             <div className="px-20 py-2.5 bg-indigo-100 flex justify-between">
                                 <span className="flex-1 text-center text-base font-medium text-gray-900">파일형식</span>
                                 <span className="flex-1 text-center text-base font-medium text-gray-900">최대 파일 사이즈</span>
-                                <span className="flex-1 text-center text-base font-medium text-gray-900">최대 해상도</span>
+                                <span className="flex-1 text-center text-base font-medium text-gray-900">처리 해상도</span>
                             </div>
-                            <div className="px-16 py-3 bg-slate-100 border-l-2 border-r-2 border-b-2 border-indigo-100 flex justify-between">
-                                <span className="flex-1 text-center text-base font-medium text-gray-900">JPEG</span>
-                                <span className="flex-1 text-center text-base font-medium text-slate-950">10MB</span>
-                                <span className="flex-1 text-center text-base font-medium text-gray-900">224px x 224px</span>
+                            <div className="px-16 py-3 bg-slate-100 border-l-2 border-r-2 border-b-2 border-indigo-100 flex flex-col gap-2">
+                                <div className="flex justify-between">
+                                    <span className="flex-1 text-center text-base font-medium text-gray-900">JPEG</span>
+                                    <span className="flex-1 text-center text-base font-medium text-slate-950">10MB</span>
+                                    <span className="flex-1 text-center text-base font-medium text-gray-900">224px x 224px</span>
+                                </div>
+                                <p className="text-center text-xs text-gray-500">
+                                    * 다른 해상도의 이미지는 자동으로 224x224로 조정됩니다
+                                </p>
                             </div>
                         </div>
                     </div>
