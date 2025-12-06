@@ -196,7 +196,7 @@ export default function ImageTransformPage() {
                     </div>
                 </div>
 
-                <aside className="w-full md:max-w-sm bg-indigo-50 px-4 sm:px-5 md:px-8 py-8 space-y-3 sm:space-y-5 md:space-y-7 md:shadow-md">
+                <aside className="w-full md:max-w-sm bg-indigo-50 px-4 sm:px-5 md:px-8 pt-4 pb-12 space-y-3 sm:space-y-5 md:space-y-7 md:shadow-md">
                     <div className="text-center md:text-center">
                         <h2 className="hidden md:block text-xl font-bold text-gray-900 mb-2">
                             파일 업로드 하기
