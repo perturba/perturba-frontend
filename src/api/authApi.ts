@@ -21,7 +21,6 @@ export async function checkAuthStatus(): Promise<boolean> {
     const {
         accessToken,
         loginType,
-        guestExpiresAt,
         setAccessToken,
         setLoginType,
         setIsAuthenticated,
@@ -33,18 +32,9 @@ export async function checkAuthStatus(): Promise<boolean> {
         return true;
     }
 
-    if (loginType === "GUEST" && guestExpiresAt) {
-        const expiryDate = new Date(guestExpiresAt);
-        const now = new Date();
-
-        if (expiryDate > now) {
-            setIsAuthenticated(true);
-            return true;
-        } else {
-            setLoginType("");
-            setIsAuthenticated(false);
-            return false;
-        }
+    if (loginType === "GUEST") {
+        setIsAuthenticated(true);
+        return true;
     }
 
     try {
