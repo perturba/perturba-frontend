@@ -165,16 +165,12 @@ export default function Header() {
                             )}
                         </>
                     ) : (
-                        <>
-                            {isGuest ? null : (
-                                <button
-                                    className="px-3 py-1.5 text-slate-800 text-sm font-medium hover:text-slate-600 transition"
-                                    onClick={handleLogout}
-                                >
-                                    로그아웃
-                                </button>
-                            )}
-                        </>
+                        <button
+                            className="px-3 py-1.5 text-slate-800 text-sm font-medium hover:text-slate-600 transition"
+                            onClick={handleLogout}
+                        >
+                            로그아웃
+                        </button>
                     )}
                 </div>
             </header>
