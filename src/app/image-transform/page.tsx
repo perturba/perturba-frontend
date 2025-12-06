@@ -10,6 +10,7 @@ import type { Intensity } from "@/types/api";
 import { createJob } from "@/api/jobApi";
 import { useAuthStore } from "@/store/authStore";
 import { processImageFile } from "@/utils/imageResize";
+import { uploadImage } from "@/api/assetApi";
 
 const strengthOptions = ["높음", "중간", "낮음"] as const;
 type Strength = typeof strengthOptions[number];
@@ -24,11 +25,13 @@ export default function ImageTransformPage() {
     const router = useRouter();
     const [selected, setSelected] = useState<Strength>("중간");
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [currentAssetId, setCurrentAssetId] = useState<number | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [showRecommendation, setShowRecommendation] = useState(false);
     const [creating, setCreating] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const { loginType } = useAuthStore();
     const isGuest = loginType === "GUEST";
 
@@ -47,6 +50,7 @@ export default function ImageTransformPage() {
         }
 
         setSelectedFile(uploadedImage.file);
+        setCurrentAssetId(uploadedImage.assetId);
         setPreviewUrl(uploadedImage.preview);
     }, [uploadedImage, router]);
 
@@ -66,6 +70,7 @@ export default function ImageTransformPage() {
 
         try {
             setProcessing(true);
+            setUploadProgress(0);
 
             const { file: processedFile, resized } = await processImageFile(file);
 
@@ -80,13 +85,27 @@ export default function ImageTransformPage() {
                 );
             }
 
+            const result = await uploadImage(processedFile, (progress) => {
+                setUploadProgress(progress);
+            });
+
             if (previewUrl) {
                 URL.revokeObjectURL(previewUrl);
             }
 
             const newPreview = URL.createObjectURL(processedFile);
             setSelectedFile(processedFile);
+            setCurrentAssetId(result.assetId);
             setPreviewUrl(newPreview);
+
+            window.dispatchEvent(
+                new CustomEvent("job-toast", {
+                    detail: {
+                        type: "success",
+                        message: "새 이미지가 업로드되었습니다.",
+                    },
+                })
+            );
         } catch (error) {
             console.error("Image processing failed:", error);
             const errorMessage = error instanceof Error ? error.message : "이미지 처리에 실패했습니다.";
@@ -100,18 +119,19 @@ export default function ImageTransformPage() {
             );
         } finally {
             setProcessing(false);
+            setUploadProgress(0);
         }
     };
 
     const handleTransformImage = async () => {
-        if (!uploadedImage || creating) return;
+        if (!currentAssetId || !selectedFile || creating) return;
 
         try {
             setCreating(true);
 
             const intensity = strengthToIntensity[selected];
             const response = await createJob({
-                inputAssetId: uploadedImage.assetId,
+                inputAssetId: currentAssetId,
                 intensity,
                 notifyVia: "NONE",
                 clientChannel: "WEB",
@@ -123,18 +143,18 @@ export default function ImageTransformPage() {
 
                 addJob({
                     publicId,
-                    fileName: uploadedImage.file.name,
+                    fileName: selectedFile.name,
                     status: "PROGRESS",
                     createdAt: new Date().toISOString(),
                 });
 
-                subscribeToJob(publicId, uploadedImage.file.name);
+                subscribeToJob(publicId, selectedFile.name);
 
                 window.dispatchEvent(
                     new CustomEvent("job-toast", {
                         detail: {
                             type: "success",
-                            message: `${uploadedImage.file.name} 변환이 시작되었습니다.`,
+                            message: `${selectedFile.name} 변환이 시작되었습니다.`,
                         },
                     })
                 );
@@ -181,10 +201,21 @@ export default function ImageTransformPage() {
             URL.revokeObjectURL(previewUrl);
         }
         setSelectedFile(null);
+        setCurrentAssetId(null);
         setPreviewUrl(null);
     };
 
-    const hasImage = selectedFile && uploadedImage && previewUrl;
+    const hasImage = selectedFile && currentAssetId && previewUrl;
+
+    const getProcessingMessage = () => {
+        if (processing) {
+            if (uploadProgress > 0) {
+                return `업로드 중... ${Math.round(uploadProgress)}%`;
+            }
+            return "이미지 처리 중...";
+        }
+        return null;
+    };
 
     return (
         <>
@@ -216,7 +247,7 @@ export default function ImageTransformPage() {
                                         <div className="w-full h-full flex items-center justify-center">
                                             <div className="flex flex-col items-center gap-3">
                                                 <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
-                                                <p className="text-sm text-gray-600">이미지 처리 중...</p>
+                                                <p className="text-sm text-gray-600">{getProcessingMessage()}</p>
                                             </div>
                                         </div>
                                     ) : (
