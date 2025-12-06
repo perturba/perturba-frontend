@@ -128,16 +128,29 @@ export default function ResponsiveImageDetailPage() {
         if (!currentImageUrl) return;
 
         try {
+            const response = await fetch('/api/download-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ imageUrl: currentImageUrl }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Download failed');
+            }
+
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+
             const link = document.createElement('a');
-            link.href = currentImageUrl;
+            link.href = blobUrl;
             link.download = `perturba_${tabList[tabIdx].replace(/\s+/g, "_")}_${Date.now()}.jpg`;
-
-            link.setAttribute('target', '_blank');
-            link.setAttribute('rel', 'noopener noreferrer');
-
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+
+            window.URL.revokeObjectURL(blobUrl);
 
             sendToast("success", "이미지 다운로드를 시작했습니다.");
         } catch (err) {
@@ -148,7 +161,7 @@ export default function ResponsiveImageDetailPage() {
                 sendToast("success", "새 탭에서 이미지를 열었습니다. 우클릭 후 '다른 이름으로 저장'을 선택해주세요.");
             } catch (fallbackErr) {
                 console.error("Fallback failed:", fallbackErr);
-                sendToast("error", "이미지를 열 수 없습니다. URL을 복사하시겠습니까?");
+                sendToast("error", "이미지를 열 수 없습니다.");
             }
         }
     }, [currentImageUrl, tabIdx]);
