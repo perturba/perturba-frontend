@@ -21,6 +21,7 @@ export async function checkAuthStatus(): Promise<boolean> {
     const {
         accessToken,
         loginType,
+        guestExpiresAt,
         setAccessToken,
         setLoginType,
         setIsAuthenticated,
@@ -32,11 +33,18 @@ export async function checkAuthStatus(): Promise<boolean> {
         return true;
     }
 
-    const isGuest = loginType === "GUEST";
+    if (loginType === "GUEST" && guestExpiresAt) {
+        const expiryDate = new Date(guestExpiresAt);
+        const now = new Date();
 
-    if (isGuest) {
-        setIsAuthenticated(true);
-        return true;
+        if (expiryDate > now) {
+            setIsAuthenticated(true);
+            return true;
+        } else {
+            setLoginType("");
+            setIsAuthenticated(false);
+            return false;
+        }
     }
 
     try {
@@ -48,7 +56,7 @@ export async function checkAuthStatus(): Promise<boolean> {
             return true;
         }
     } catch (err) {
-        console.warn("Access token refresh failed, fallback to guest:", err);
+        console.warn("Access token refresh failed:", err);
     }
 
     setLoginType("");

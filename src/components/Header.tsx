@@ -55,6 +55,7 @@ export default function Header() {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
     const loginType = useAuthStore((state) => state.loginType);
     const setLoginType = useAuthStore((state) => state.setLoginType);
+    const setGuestExpiresAt = useAuthStore((state) => state.setGuestExpiresAt);
     const logout = useAuthStore((state) => state.logout);
     const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
 
@@ -74,7 +75,8 @@ export default function Header() {
 
     const handleGuestLogin = async () => {
         try {
-            await getGuestSession();
+            const res = await getGuestSession();
+            setGuestExpiresAt(res.data.expiresAt);
             setLoginType("GUEST");
             setIsAuthenticated(true);
             handleMove("/dashboard", sidebarMenu[0].label);
