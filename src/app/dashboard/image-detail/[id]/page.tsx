@@ -128,13 +128,22 @@ export default function ResponsiveImageDetailPage() {
         if (!currentImageUrl) return;
 
         try {
+            const res = await fetch(currentImageUrl, {});
+            if (!res.ok) {
+                throw new Error("Failed to fetch image");
+            }
+
+            const blob = await res.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+
             const a = document.createElement("a");
-            a.href = currentImageUrl;
-            a.download = `perturba_${tabList[tabIdx].replace(/\s+/g, '_')}_${Date.now()}.jpg`;
-            a.target = "_blank";
+            a.href = blobUrl;
+            a.download = `perturba_${tabList[tabIdx].replace(/\s+/g, "_")}_${Date.now()}.jpg`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+
+            window.URL.revokeObjectURL(blobUrl);
 
             sendToast("success", "이미지 다운로드를 시작했습니다.");
         } catch (err) {

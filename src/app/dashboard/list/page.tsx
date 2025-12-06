@@ -6,7 +6,7 @@ import { getJobList } from "@/api/jobApi";
 import type { Job } from "@/types/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 5;
 
 export default function ImageListPage() {
     const router = useRouter();

@@ -76,7 +76,7 @@ export default function ImageUploadPage() {
                     <label className={`w-full max-w-[280px] sm:max-w-[320px] md:max-w-[698px] bg-slate-100 border-2 md:border-4 border-dashed border-blue-500 rounded-2xl py-12 sm:py-16 md:py-24 flex flex-col items-center justify-center gap-2 sm:gap-3 md:gap-4 shadow-md md:shadow-[0px_7px_29px_0px_rgba(100,100,111,0.20)] ${uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
                         <input
                             type="file"
-                            accept="image/jpeg,image/png,image/gif"
+                            accept="image/jpeg"
                             className="hidden"
                             onChange={handleFileUpload}
                             disabled={uploading}
@@ -88,7 +88,7 @@ export default function ImageUploadPage() {
                             {uploading ? `업로드 중... ${Math.round(uploadProgress)}%` : "파일을 업로드하려면 클릭하세요"}
                         </span>
                         <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-600 text-center">
-                            지원 조건: 224×224px · JPEG, PNG, GIF · 10MB 이하
+                            지원 조건: 224×224px · JPEG · 10MB 이하
                         </span>
                     </label>
                 </div>
@@ -102,7 +102,7 @@ export default function ImageUploadPage() {
                         <div className="md:hidden px-4 sm:px-6 py-4 sm:py-6 bg-slate-100 border-l-2 border-r-2 border-b-2 border-indigo-100 space-y-3 sm:space-y-4">
                             <div className="flex flex-col gap-0.5 sm:gap-1">
                                 <span className="text-xs sm:text-sm text-gray-600">파일형식</span>
-                                <span className="text-sm sm:text-base font-medium text-gray-900">JPEG, PNG, GIF</span>
+                                <span className="text-sm sm:text-base font-medium text-gray-900">JPEG</span>
                             </div>
                             <div className="flex flex-col gap-0.5 sm:gap-1">
                                 <span className="text-xs sm:text-sm text-gray-600">최대 파일 사이즈</span>
@@ -121,7 +121,7 @@ export default function ImageUploadPage() {
                                 <span className="flex-1 text-center text-base font-medium text-gray-900">최대 해상도</span>
                             </div>
                             <div className="px-16 py-3 bg-slate-100 border-l-2 border-r-2 border-b-2 border-indigo-100 flex justify-between">
-                                <span className="flex-1 text-center text-base font-medium text-gray-900">JPEG, PNG, GIF</span>
+                                <span className="flex-1 text-center text-base font-medium text-gray-900">JPEG</span>
                                 <span className="flex-1 text-center text-base font-medium text-slate-950">10MB</span>
                                 <span className="flex-1 text-center text-base font-medium text-gray-900">224px x 224px</span>
                             </div>

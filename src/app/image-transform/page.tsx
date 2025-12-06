@@ -89,7 +89,7 @@ export default function ImageTransformPage() {
                 );
 
                 clearUploadedImage();
-                if(isGuest) router.push("/dashboard/image-upload");
+                if (isGuest) router.push("/dashboard/image-upload");
                 else router.push("/dashboard/list");
             } else {
                 throw new Error("작업 생성 실패");
@@ -178,7 +178,7 @@ export default function ImageTransformPage() {
                             <label className="w-full max-w-[280px] sm:max-w-[320px] md:max-w-xl bg-white md:bg-slate-100 border-2 md:border-4 border-dashed border-blue-500 rounded-3xl py-12 sm:py-16 md:py-20 flex flex-col items-center justify-center gap-2 sm:gap-3 md:gap-4 cursor-pointer md:shadow-lg">
                                 <input
                                     type="file"
-                                    accept="image/jpeg,image/png,image/gif"
+                                    accept="image/jpeg"
                                     className="hidden"
                                     onChange={handleFileUpload}
                                 />
@@ -189,14 +189,14 @@ export default function ImageTransformPage() {
                                     파일을 업로드하려면 클릭하세요
                                 </span>
                                 <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-600 text-center">
-                                    지원 조건: 224×224px · JPEG, PNG, GIF · 10MB 이하
+                                    지원 조건: 224×224px · JPEG · 10MB 이하
                                 </span>
                             </label>
                         )}
                     </div>
                 </div>
 
-                <aside className="w-full md:max-w-sm bg-indigo-50 px-4 sm:px-5 md:px-8 py-4 sm:py-6 md:py-8 space-y-3 sm:space-y-5 md:space-y-7 md:shadow-md">
+                <aside className="w-full md:max-w-sm bg-indigo-50 px-4 sm:px-5 md:px-8 py-8 space-y-3 sm:space-y-5 md:space-y-7 md:shadow-md">
                     <div className="text-center md:text-center">
                         <h2 className="hidden md:block text-xl font-bold text-gray-900 mb-2">
                             파일 업로드 하기
@@ -231,8 +231,8 @@ export default function ImageTransformPage() {
                                             setDropdownOpen(false);
                                         }}
                                         className={`w-full px-4 sm:px-5 py-2.5 sm:py-3 text-sm sm:text-base md:text-lg font-semibold text-left ${option === selected
-                                                ? "bg-indigo-50 text-blue-600"
-                                                : "text-gray-900 hover:bg-gray-50"
+                                            ? "bg-indigo-50 text-blue-600"
+                                            : "text-gray-900 hover:bg-gray-50"
                                             }`}
                                     >
                                         {option}
