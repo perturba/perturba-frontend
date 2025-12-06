@@ -128,7 +128,15 @@ export default function ResponsiveImageDetailPage() {
         if (!currentImageUrl) return;
 
         try {
-            const res = await fetch(currentImageUrl, {});
+            const url = `${currentImageUrl}${currentImageUrl.includes("?") ? "&" : "?"
+                }no-cache=${Date.now()}`;
+
+            const res = await fetch(url, {
+                method: "GET",
+                mode: "cors",
+                cache: "no-store",
+            });
+
             if (!res.ok) {
                 throw new Error("Failed to fetch image");
             }
@@ -214,7 +222,7 @@ export default function ResponsiveImageDetailPage() {
 
     return (
         <div className="flex-1 flex flex-col bg-white md:bg-gray-50 overflow-hidden">
-            <div className="flex md:hidden items-center justify-between px-3 py-3 bg-white border-b border-gray-200">
+            <div className="flex md:hidden items-center justify-between px-3 py-2 bg-white border-b border-gray-200">
                 <button onClick={handleGoBack} className="p-2">
                     <BiChevronLeft size={24} className="text-gray-900" />
                 </button>
@@ -347,7 +355,7 @@ export default function ResponsiveImageDetailPage() {
                 </div>
             </div>
 
-            <div className="flex justify-center md:justify-end px-4 md:px-8 py-4 md:py-6 bg-white border-t border-gray-200 md:bg-gray-50 md:border-t-0">
+            <div className="flex justify-center md:justify-end px-4 md:px-8 pt-4 pb-6 bg-white border-t border-gray-200 md:bg-gray-50 md:border-t-0">
                 <div className="flex flex-col items-center gap-3 md:gap-4 max-w-2xl md:ml-auto md:mr-4">
                     <button
                         className="text-gray-700 text-sm font-medium border-b border-gray-400 pb-1 md:hover:text-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-300"
