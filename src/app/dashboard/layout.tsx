@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
+import { JobStatusRehydrator } from "@/components/JobStatusHydrator";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -31,6 +32,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return (
         <div className="flex-1 min-h-0 flex flex-col">
+            <JobStatusRehydrator />
             {children}
         </div>
     );

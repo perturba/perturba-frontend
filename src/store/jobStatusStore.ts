@@ -17,6 +17,9 @@ interface JobStatusState {
     removeJob: (publicId: string) => void;
     clearAllJobs: () => void;
     getJobsByStatus: (status: JobStatus) => JobItem[];
+    
+    _hasHydrated: boolean;
+    setHasHydrated: (v: boolean) => void;
 }
 
 class EventSourceManager {
@@ -33,6 +36,13 @@ class EventSourceManager {
         this.setupEventHandlers(eventSource, publicId, fileName, store);
 
         this.sources.set(publicId, eventSource);
+
+        store.addJob({
+            publicId: publicId,
+            fileName,
+            status: "PROGRESS",
+            createdAt: new Date().toISOString(),
+        });
     }
 
     private setupEventHandlers(
@@ -41,31 +51,15 @@ class EventSourceManager {
         fileName: string,
         store: JobStatusState
     ) {
-        eventSource.addEventListener("job-created", (event) => {
+        eventSource.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            store.addJob({
-                publicId: data.publicId,
-                fileName,
-                status: "PROGRESS",
-                createdAt: data.createdAt || new Date().toISOString(),
-            });
-        });
 
-        eventSource.addEventListener("job-completed", (event) => {
-            const data = JSON.parse(event.data);
             store.updateJobStatus(publicId, "COMPLETED", data.completedAt);
 
             this.notifyUser(fileName, "success");
             this.sendToast(fileName, "success");
             this.cleanup(publicId);
-        });
-
-        eventSource.addEventListener("job-failed", () => {
-            store.updateJobStatus(publicId, "FAILED");
-
-            this.sendToast(fileName, "error");
-            this.cleanup(publicId);
-        });
+        };
 
         eventSource.onerror = () => {
             this.cleanup(publicId);
@@ -129,6 +123,8 @@ export const useJobStatusStore = create<JobStatusState>()(
     persist(
         (set, get) => ({
             jobs: [],
+            _hasHydrated: false,
+            setHasHydrated: (value: boolean) => set({ _hasHydrated: value }),
 
             addJob: (job) =>
                 set((state) => {
@@ -167,6 +163,9 @@ export const useJobStatusStore = create<JobStatusState>()(
         {
             name: "job-status-storage",
             storage: createJSONStorage(() => localStorage),
+            onRehydrateStorage: () => (state) => {
+                state?.setHasHydrated?.(true);
+            },
         }
     )
 );
